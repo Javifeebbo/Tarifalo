@@ -16,6 +16,7 @@ import { Manifesto } from "@/components/Manifesto";
 import { About } from "@/components/About";
 import { Steps } from "@/components/Steps";
 import { Servicios } from "@/components/Servicios";
+import { LeadMagnetBanner } from "@/components/LeadMagnetBanner";
 import { PartnerMarquee } from "@/components/PartnerMarquee";
 import { Footer } from "@/components/Footer";
 
@@ -29,7 +30,8 @@ export default function Home() {
         <Manifesto />
         <About />
         <Steps />
-        <Servicios />
+      <Servicios />
+        <LeadMagnetBanner />
         <PartnerMarquee />
       </main>
       <Footer />

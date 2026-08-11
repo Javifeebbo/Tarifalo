@@ -89,8 +89,11 @@ export function Footer() {
           <a href="/" className="font-sans text-xs text-cream-dim/70 underline hover:text-cream-dim">
             Inicio
           </a>
-          <a href="/comparar" className="font-sans text-xs text-cream-dim/70 underline hover:text-cream-dim">
+  <a href="/comparar" className="font-sans text-xs text-cream-dim/70 underline hover:text-cream-dim">
             Comparar
+          </a>
+          <a href="/guia-ahorro-luz" className="font-sans text-xs text-cream-dim/70 underline hover:text-cream-dim">
+            Guía gratis
           </a>
           <a href="/politica-privacidad" className="font-sans text-xs text-cream-dim/70 underline hover:text-cream-dim">
             Política de privacidad
