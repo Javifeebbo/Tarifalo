@@ -29,7 +29,7 @@ export function LeadMagnetBanner() {
             necesitamos tu nombre, teléfono y email.
           </motion.p>
           <motion.div variants={enterFade}>
-            
+            <a
               href="/guia-ahorro-luz"
               className="mt-7 inline-block rounded-full bg-orange px-10 py-3.5 font-sans text-[15px] font-semibold text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-card-navy"
             >
