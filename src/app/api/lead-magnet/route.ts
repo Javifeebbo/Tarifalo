@@ -35,10 +35,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Debes aceptar la política de privacidad" }, { status: 400 });
   }
 
-  // Same soft-dedupe behaviour as /api/comparar: don't insert a second row
-  // for an email that's already in the table, but still tell the client it
-  // succeeded so the PDF download isn't blocked for a returning visitor.
-  const existing = await sql`select id from leads where email = ${email.trim()} limit 1`;
+// Soft-dedupe scoped to this campaign only — an email that already exists
+  // from /comparar or the newsletter must NOT block a first-time lead-magnet
+  // signup (that was the original bug: the check matched any row with that
+  // email regardless of source, so repeat testers/customers never got
+  // inserted here at all).
+  const existing = await sql`
+    select id from leads
+    where email = ${email.trim()} and source = 'lead_magnet' and campaign = 'guia-ahorro-luz'
+    limit 1
+  `;
   if (existing.length === 0) {
     await sql`
       insert into leads (source, email, name, phone, consent, campaign)
