@@ -28,6 +28,16 @@ alter table leads add constraint leads_source_check
   check (source in ('newsletter', 'comparador', 'lead_magnet'));
 alter table leads add column if not exists campaign text;
 
+-- Comparator qualifying fields, added to match the richer form on the real
+-- tarifalo.com /comparador pages (tipo de cliente, nº de personas,
+-- superficie, compañía actual). All nullable — existing rows and other
+-- sources (newsletter, lead_magnet) never set these.
+alter table leads add column if not exists customer_type text
+  check (customer_type is null or customer_type in ('particular', 'empresa'));
+alter table leads add column if not exists household_size text;
+alter table leads add column if not exists surface_m2 text;
+alter table leads add column if not exists current_company text;
+
 create table if not exists example_tariffs (
   id serial primary key,
   tariff_type text not null check (tariff_type in ('luz', 'gas', 'luz_gas', 'solar')),

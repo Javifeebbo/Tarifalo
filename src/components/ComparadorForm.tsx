@@ -6,13 +6,21 @@ import { motion } from "framer-motion";
 import { IllustrativeBadge } from "./IllustrativeBadge";
 
 const TARIFF_OPTIONS = [
-  { value: "luz", label: "Luz" },
-  { value: "gas", label: "Gas" },
-  { value: "luz_gas", label: "Luz + Gas" },
-  { value: "solar", label: "Solar" },
+  { value: "luz", label: "Luz", icon: "⚡" },
+  { value: "gas", label: "Gas", icon: "🔥" },
+  { value: "luz_gas", label: "Luz + Gas", icon: "⭐" },
+  { value: "solar", label: "Solar", icon: "☀️" },
 ] as const;
 
 type TariffValue = (typeof TARIFF_OPTIONS)[number]["value"];
+
+const CUSTOMER_TYPE_OPTIONS = [
+  { value: "particular", label: "Particular" },
+  { value: "empresa", label: "Empresa" },
+] as const;
+
+const HOUSEHOLD_SIZE_OPTIONS = ["1", "2", "3", "4", "5+"];
+const SURFACE_OPTIONS = ["Menos de 60 m²", "60–90 m²", "90–120 m²", "Más de 120 m²"];
 
 type ComparisonResult = {
   illustrative: boolean;
@@ -30,6 +38,10 @@ export function ComparadorForm() {
   const preselected = params.get("tarifa");
 
   const [tariffType, setTariffType] = useState<TariffValue>(isTariffValue(preselected) ? preselected : "luz");
+  const [customerType, setCustomerType] = useState<"particular" | "empresa">("particular");
+  const [householdSize, setHouseholdSize] = useState("");
+  const [surfaceM2, setSurfaceM2] = useState("");
+  const [currentCompany, setCurrentCompany] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -59,6 +71,10 @@ export function ComparadorForm() {
           postalCode: postalCode || undefined,
           monthlyBillEstimate,
           consent,
+          customerType,
+          householdSize: householdSize || undefined,
+          surfaceM2: surfaceM2 || undefined,
+          currentCompany: currentCompany || undefined,
         }),
       });
       const data = await res.json();
@@ -104,120 +120,161 @@ export function ComparadorForm() {
     );
   }
 
+  const selectClass =
+    "w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none";
+  const labelClass = "mb-1.5 block font-sans text-sm font-semibold text-navy";
+
   return (
-    <form onSubmit={handleSubmit} className="mx-auto flex max-w-[560px] flex-col gap-4">
-      <div>
-        <label htmlFor="tariffType" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-          Tarifa que te interesa
+    <form onSubmit={handleSubmit} className="mx-auto flex max-w-[640px] flex-col gap-5">
+      {/* Tabs de tarifa — mismo patrón que /comparador/{luz,gas,...} en tarifalo.com */}
+      <div className="flex flex-wrap gap-2">
+        {TARIFF_OPTIONS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTariffType(t.value)}
+            className={
+              tariffType === t.value
+                ? "flex items-center gap-1.5 rounded-full bg-orange px-5 py-2.5 font-sans text-[13px] font-semibold text-navy"
+                : "flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 font-sans text-[13px] font-semibold text-navy/55"
+            }
+          >
+            <span aria-hidden="true">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-2xl bg-white p-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Tipo de cliente</label>
+            <div className="flex gap-2">
+              {CUSTOMER_TYPE_OPTIONS.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setCustomerType(c.value)}
+                  className={
+                    customerType === c.value
+                      ? "flex-1 rounded-xl bg-navy px-4 py-3 font-sans text-sm font-semibold text-white"
+                      : "flex-1 rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy/60"
+                  }
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label htmlFor="currentCompany" className={labelClass}>
+              Compañía actual <span className="text-navy/40">(opcional)</span>
+            </label>
+            <input
+              id="currentCompany"
+              value={currentCompany}
+              onChange={(e) => setCurrentCompany(e.target.value)}
+              placeholder="Ej. Endesa, Iberdrola…"
+              className={selectClass}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="householdSize" className={labelClass}>
+              Nº de personas <span className="text-navy/40">(opcional)</span>
+            </label>
+            <select id="householdSize" value={householdSize} onChange={(e) => setHouseholdSize(e.target.value)} className={selectClass}>
+              <option value="">Selecciona…</option>
+              {HOUSEHOLD_SIZE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="surfaceM2" className={labelClass}>
+              Superficie <span className="text-navy/40">(opcional)</span>
+            </label>
+            <select id="surfaceM2" value={surfaceM2} onChange={(e) => setSurfaceM2(e.target.value)} className={selectClass}>
+              <option value="">Selecciona…</option>
+              {SURFACE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="h-px bg-navy/10" />
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="name" className={labelClass}>
+              Nombre
+            </label>
+            <input id="name" required minLength={2} value={name} onChange={(e) => setName(e.target.value)} className={selectClass} />
+          </div>
+          <div>
+            <label htmlFor="phone" className={labelClass}>
+              Teléfono <span className="text-navy/40">(opcional)</span>
+            </label>
+            <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={selectClass} />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="email" className={labelClass}>
+            Email
+          </label>
+          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={selectClass} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="postalCode" className={labelClass}>
+              Código postal <span className="text-navy/40">(opcional)</span>
+            </label>
+            <input id="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className={selectClass} />
+          </div>
+          <div>
+            <label htmlFor="monthlyBill" className={labelClass}>
+              Factura mensual actual € <span className="text-navy/40">(opcional)</span>
+            </label>
+            <input
+              id="monthlyBill"
+              type="number"
+              min={0}
+              step="0.01"
+              value={monthlyBill}
+              onChange={(e) => setMonthlyBill(e.target.value)}
+              className={selectClass}
+            />
+          </div>
+        </div>
+
+        <label className="flex items-start gap-2.5 font-sans text-xs leading-relaxed text-navy/70">
+          <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+          Acepto que Tarífalo guarde estos datos para contactarme con una comparación de tarifas, según la{" "}
+          <a href="/politica-privacidad" className="underline hover:text-navy" target="_blank" rel="noopener noreferrer">
+            política de privacidad
+          </a>
+          .
         </label>
-        <select
-          id="tariffType"
-          value={tariffType}
-          onChange={(e) => setTariffType(e.target.value as TariffValue)}
-          className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
+
+        {error && <p className="font-sans text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="rounded-full bg-orange px-10 py-3.5 font-sans text-[15px] font-semibold text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
-          {TARIFF_OPTIONS.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
+          {status === "loading" ? "Comparando…" : "Ver comparación de ejemplo"}
+        </button>
       </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="name" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-            Nombre
-          </label>
-          <input
-            id="name"
-            required
-            minLength={2}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="phone" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-            Teléfono <span className="text-navy/40">(opcional)</span>
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="email" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="postalCode" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-            Código postal <span className="text-navy/40">(opcional)</span>
-          </label>
-          <input
-            id="postalCode"
-            value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value)}
-            className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="monthlyBill" className="mb-1.5 block font-sans text-sm font-semibold text-navy">
-            Factura mensual actual € <span className="text-navy/40">(opcional)</span>
-          </label>
-          <input
-            id="monthlyBill"
-            type="number"
-            min={0}
-            step="0.01"
-            value={monthlyBill}
-            onChange={(e) => setMonthlyBill(e.target.value)}
-            className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3 font-sans text-sm text-navy focus:border-orange focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <label className="flex items-start gap-2.5 font-sans text-xs leading-relaxed text-navy/70">
-        <input
-          type="checkbox"
-          required
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5"
-        />
-        Acepto que Tarífalo guarde estos datos para contactarme con una comparación de tarifas, según la{" "}
-        <a href="/politica-privacidad" className="underline hover:text-navy" target="_blank" rel="noopener noreferrer">
-          política de privacidad
-        </a>
-        .
-      </label>
-
-      {error && <p className="font-sans text-sm text-red-600">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="mt-2 rounded-full bg-orange px-10 py-3.5 font-sans text-[15px] font-semibold text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:brightness-110 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-      >
-        {status === "loading" ? "Comparando…" : "Ver comparación de ejemplo"}
-      </button>
     </form>
   );
 }

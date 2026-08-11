@@ -13,7 +13,8 @@ export const revalidate = 0;
 export async function GET() {
   const rows = await sql`
     select id, created_at, source, campaign, name, email, phone,
-           tariff_type, postal_code, monthly_bill_estimate, consent
+           tariff_type, postal_code, monthly_bill_estimate, consent,
+           customer_type, household_size, surface_m2, current_company
     from leads
     order by created_at desc
   `;

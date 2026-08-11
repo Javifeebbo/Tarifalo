@@ -5,8 +5,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TARIFF_TYPES = ["luz", "gas", "luz_gas", "solar"] as const;
 type TariffType = (typeof TARIFF_TYPES)[number];
 
+const CUSTOMER_TYPES = ["particular", "empresa"] as const;
+type CustomerType = (typeof CUSTOMER_TYPES)[number];
+
 function isTariffType(value: unknown): value is TariffType {
   return typeof value === "string" && (TARIFF_TYPES as readonly string[]).includes(value);
+}
+
+function isCustomerType(value: unknown): value is CustomerType {
+  return typeof value === "string" && (CUSTOMER_TYPES as readonly string[]).includes(value);
+}
+
+// Normalizes any optional free-text/select field: trims, and turns an empty
+// string into null so we don't store "" in Postgres for "not answered".
+function optionalText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 export async function POST(request: Request) {
@@ -17,7 +30,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cuerpo inválido" }, { status: 400 });
   }
 
-  const { name, email, phone, tariffType, postalCode, monthlyBillEstimate, consent } = (body ?? {}) as {
+  const {
+    name,
+    email,
+    phone,
+    tariffType,
+    postalCode,
+    monthlyBillEstimate,
+    consent,
+    customerType,
+    householdSize,
+    surfaceM2,
+    currentCompany,
+  } = (body ?? {}) as {
     name?: unknown;
     email?: unknown;
     phone?: unknown;
@@ -25,6 +50,10 @@ export async function POST(request: Request) {
     postalCode?: unknown;
     monthlyBillEstimate?: unknown;
     consent?: unknown;
+    customerType?: unknown;
+    householdSize?: unknown;
+    surfaceM2?: unknown;
+    currentCompany?: unknown;
   };
 
   if (typeof name !== "string" || name.trim().length < 2) {
@@ -36,6 +65,11 @@ export async function POST(request: Request) {
   if (!isTariffType(tariffType)) {
     return NextResponse.json({ error: "Tipo de tarifa inválido" }, { status: 400 });
   }
+  // Optional, but if present must be one of the two known values — silently
+  // ignoring a typo'd value would be worse than rejecting it here.
+  if (customerType !== undefined && customerType !== "" && !isCustomerType(customerType)) {
+    return NextResponse.json({ error: "Tipo de cliente inválido" }, { status: 400 });
+  }
   if (consent !== true) {
     return NextResponse.json({ error: "Debes aceptar la política de privacidad" }, { status: 400 });
   }
@@ -46,16 +80,23 @@ export async function POST(request: Request) {
       : null;
 
   await sql`
-    insert into leads (source, email, name, phone, tariff_type, postal_code, monthly_bill_estimate, consent)
+    insert into leads (
+      source, email, name, phone, tariff_type, postal_code, monthly_bill_estimate, consent,
+      customer_type, household_size, surface_m2, current_company
+    )
     values (
       'comparador',
       ${email},
       ${name.trim()},
       ${typeof phone === "string" && phone.trim() ? phone.trim() : null},
       ${tariffType},
-      ${typeof postalCode === "string" && postalCode.trim() ? postalCode.trim() : null},
+      ${optionalText(postalCode)},
       ${billEstimate},
-      true
+      true,
+      ${isCustomerType(customerType) ? customerType : null},
+      ${optionalText(householdSize)},
+      ${optionalText(surfaceM2)},
+      ${optionalText(currentCompany)}
     )
   `;
 

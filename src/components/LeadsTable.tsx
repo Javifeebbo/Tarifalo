@@ -14,6 +14,10 @@ type Lead = {
   postal_code: string | null;
   monthly_bill_estimate: string | null;
   consent: boolean;
+  customer_type: string | null;
+  household_size: string | null;
+  surface_m2: string | null;
+  current_company: string | null;
 };
 
 type SortKey = keyof Pick<Lead, "created_at" | "source" | "name" | "email" | "tariff_type">;
@@ -41,7 +45,10 @@ function formatDate(iso: string) {
 }
 
 function toCSV(rows: Lead[]) {
-  const headers = ["Fecha", "Origen", "Campaña", "Nombre", "Email", "Teléfono", "Tarifa", "CP", "Factura est.", "Consentimiento"];
+  const headers = [
+    "Fecha", "Origen", "Campaña", "Nombre", "Email", "Teléfono", "Tarifa", "CP", "Factura est.",
+    "Tipo cliente", "Nº personas", "Superficie", "Compañía actual", "Consentimiento",
+  ];
   const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lines = [headers.map(escape).join(",")];
   for (const r of rows) {
@@ -56,6 +63,10 @@ function toCSV(rows: Lead[]) {
         r.tariff_type ?? "",
         r.postal_code ?? "",
         r.monthly_bill_estimate ?? "",
+        r.customer_type ?? "",
+        r.household_size ?? "",
+        r.surface_m2 ?? "",
+        r.current_company ?? "",
         r.consent ? "Sí" : "No",
       ]
         .map((v) => escape(String(v)))
@@ -199,6 +210,10 @@ export function LeadsTable() {
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">Teléfono</th>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">CP</th>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">Factura est.</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Tipo cliente</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Nº personas</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Superficie</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">Compañía actual</th>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">Campaña</th>
                   <th className="whitespace-nowrap px-4 py-3 font-semibold">Consiente</th>
                 </tr>
@@ -220,6 +235,10 @@ export function LeadsTable() {
                     <td className="whitespace-nowrap px-4 py-3 text-navy/80">
                       {lead.monthly_bill_estimate ? `${lead.monthly_bill_estimate} €` : "—"}
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-navy/80 capitalize">{lead.customer_type ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-navy/80">{lead.household_size ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-navy/80">{lead.surface_m2 ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-navy/80">{lead.current_company ?? "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-navy/60">{lead.campaign ?? "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3">{lead.consent ? "✅" : "❌"}</td>
                   </tr>
