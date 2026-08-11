@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { routeLead, type LeadCriteria } from "@/lib/matching";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TARIFF_TYPES = ["luz", "gas", "luz_gas", "solar"] as const;
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
       ? monthlyBillEstimate
       : null;
 
-  await sql`
+  const [lead] = await sql`
     insert into leads (
       source, email, name, phone, tariff_type, postal_code, monthly_bill_estimate, consent,
       customer_type, household_size, surface_m2, current_company
@@ -98,24 +99,30 @@ export async function POST(request: Request) {
       ${optionalText(surfaceM2)},
       ${optionalText(currentCompany)}
     )
+    returning id
   `;
 
-  const tariffs = await sql`
-    select label, monthly_price, illustrative
-    from example_tariffs
-    where tariff_type = ${tariffType}
-    order by monthly_price asc
-  `;
+  const criteria: LeadCriteria = {
+    tariffType,
+    customerType: isCustomerType(customerType) ? customerType : null,
+    householdSize: optionalText(householdSize),
+    surfaceM2: optionalText(surfaceM2),
+    postalCode: optionalText(postalCode),
+    currentCompany: optionalText(currentCompany),
+  };
 
-  const cheapest = tariffs[0] ? Number(tariffs[0].monthly_price) : null;
+  const { ranked, winnerCompanyName } = await routeLead(lead.id, criteria);
+
+  const cheapest = ranked[0] ? ranked[0].monthlyPrice : null;
   const estimatedMonthlySaving = billEstimate !== null && cheapest !== null ? Math.max(0, billEstimate - cheapest) : null;
 
   return NextResponse.json({
     ok: true,
     illustrative: true,
     disclaimer:
-      "Estos resultados son un ejemplo ilustrativo con tarifas de muestra, no una oferta real de ninguna compañía. Te contactaremos con una comparación verificada.",
-    tariffs: tariffs.map((t) => ({ label: t.label, monthlyPrice: Number(t.monthly_price), illustrative: t.illustrative })),
+      "Estos resultados son un ejemplo ilustrativo con tarifas y campañas de muestra, no una oferta real de ninguna compañía. Te contactaremos con una comparación verificada.",
+    tariffs: ranked.map((t) => ({ label: `${t.companyName} — ${t.label}`, monthlyPrice: t.monthlyPrice, illustrative: t.illustrative })),
     estimatedMonthlySaving,
+    routedTo: winnerCompanyName,
   });
 }

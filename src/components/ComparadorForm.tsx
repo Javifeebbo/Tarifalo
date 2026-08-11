@@ -27,6 +27,7 @@ type ComparisonResult = {
   disclaimer: string;
   tariffs: { label: string; monthlyPrice: number; illustrative: boolean }[];
   estimatedMonthlySaving: number | null;
+  routedTo: string | null;
 };
 
 function isTariffValue(value: string | null): value is TariffValue {
@@ -116,6 +117,11 @@ export function ComparadorForm() {
         <p className="mt-6 text-center font-sans text-sm text-navy/60">
           Hemos guardado tus datos — te contactaremos con una comparación real verificada.
         </p>
+        {result.routedTo && (
+          <p className="mt-2 text-center font-sans text-xs text-navy/40">
+            Motor de reparto interno (demo): este lead se asignaría a {result.routedTo}.
+          </p>
+        )}
       </motion.div>
     );
   }
