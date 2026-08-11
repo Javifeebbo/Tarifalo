@@ -123,7 +123,8 @@ export async function routeLead(leadId: string, criteria: LeadCriteria): Promise
       }));
 
     if (eligible.length === 0) {
-      for (const [rank, r] of withReason.entries()) {
+      for (let rank = 0; rank < withReason.length; rank++) {
+        const r = withReason[rank];
         await tx`
           insert into lead_assignments (lead_id, campaign_id, company_id, rank, is_winner, reason, illustrative)
           values (${leadId}, ${r.campaign.id}, ${r.campaign.company_id}, ${rank + 1}, false, ${r.reason ?? "no elegible"}, true)
@@ -140,7 +141,8 @@ export async function routeLead(leadId: string, criteria: LeadCriteria): Promise
 
     await tx`update campaigns set assigned_count = assigned_count + 1 where id = ${winner.id}`;
 
-    for (const [rank, r] of withReason.entries()) {
+    for (let rank = 0; rank < withReason.length; rank++) {
+      const r = withReason[rank];
       const isWinner = r.campaign.id === winner.id;
       const reason = r.reason
         ? r.reason
